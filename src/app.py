@@ -1,5 +1,5 @@
-from vision_core import NeuralVisionEngine
-from mouse_engine import KinematicMouse
+from modules.vision_engine import NeuralVisionEngine
+from modules.mouse_engine import KinematicMouse
 import time
 
 def main():
