@@ -3,7 +3,7 @@ from modules.mouse_engine import KinematicMouse
 import time
 
 def main():
-    print("Démarrage du Neural Gaze Engine...")
+    print("Starting NeuralGaze Engine...")
     vision_engine = NeuralVisionEngine()
     mouse_engine = KinematicMouse()
     
@@ -11,27 +11,26 @@ def main():
     start_time = time.time()
     last_fps_time = time.time()
     
-    print("Moteur de vision initialisé avec succès !")
-    print("Contrôles Système :")
-    print("  [C] - Initialiser la Calibration (au lieu de ESPACE)")
-    print("  [M] - Changer de mode de suivi Dynamique/Statique (au lieu de A)")
-    print("  [L] - Afficher/Masquer le maillage facial IA")
-    print("  [Q] - Quitter le système")
+    print("NeuralGaze AI Vision initialized successfully!")
+    print("System Controls:")
+    print("  [C] - Initialize Calibration")
+    print("  [M] - Toggle Tracking Mode (Dynamic/Static)")
+    print("  [L] - Toggle AI Facial Mesh HUD")
+    print("  [Q] - Quit System")
     
     try:
         while True:
             gaze_coords, click_type = vision_engine.get_gaze()
             
-            # Correction ici : "is not None" pour éviter l'erreur NumPy
             if gaze_coords is not None and vision_engine.calibrated:
                 mouse_engine.set_dynamic_mode(vision_engine.dynamic_mode)
                 mouse_engine.move_mouse(gaze_coords)
                 
                 if click_type == "left":
-                    print("--> Action: Clic GAUCHE détecté !")
+                    print("--> Action: LEFT Click detected!")
                     mouse_engine.click("left")
                 elif click_type == "right":
-                    print("--> Action: Clic DROIT détecté !")
+                    print("--> Action: RIGHT Click detected!")
                     mouse_engine.click("right")
             
             frame_count += 1
@@ -41,19 +40,19 @@ def main():
                 elapsed = current_time - start_time
                 fps = frame_count / elapsed
                 mode = "DYNAMIC KINEMATICS" if vision_engine.dynamic_mode else "STATIC TRACKING"
-                print(f"Fluidité IO: {fps:.1f} FPS | Mode: {mode} | Système Actif")
+                print(f"I/O Fluidity: {fps:.1f} FPS | Mode: {mode} | System Active")
                 last_fps_time = current_time
             
             if vision_engine.should_quit():
                 break
                 
     except KeyboardInterrupt:
-        print("\nArrêt manuel du système...")
+        print("\nManual system shutdown...")
     except Exception as e:
-        print(f"Erreur critique: {e}")
+        print(f"Critical Error: {e}")
     finally:
         vision_engine.cleanup()
-        print("Moteur Neural Gaze fermé en sécurité.")
+        print("NeuralGaze Engine safely closed.")
 
 if __name__ == "__main__":
     main()
