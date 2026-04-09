@@ -31,7 +31,7 @@ class NeuralVisionEngine:
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         face_results = self.face_mesh.process(rgb_frame)
         pose_results = self.pose.process(rgb_frame)
-        if not face_results.multi_face_landmarks:
+        if face_results.multi_face_landmarks is None:
             show_error_frame(frame, "No face detected")
             return None, None
         landmarks = face_results.multi_face_landmarks[0]
@@ -50,20 +50,24 @@ class NeuralVisionEngine:
                     if 0.15 < dur < 1.0: click_type = "left"
                     elif 1.0 <= dur < 3.0: click_type = "right"
                     
+        left_pupil, right_pupil = None, None
         if left_op < self.eye_openness_threshold or right_op < self.eye_openness_threshold:
-            if self.prev_left_pupil and self.prev_right_pupil: left_pupil, right_pupil = self.prev_left_pupil, self.prev_right_pupil
+            if self.prev_left_pupil is not None and self.prev_right_pupil is not None: 
+                left_pupil, right_pupil = self.prev_left_pupil, self.prev_right_pupil
             else: return None, None
         else:
             _, lb = extract_eye_region(frame, landmarks, LEFT_EYE)
             _, rb = extract_eye_region(frame, landmarks, RIGHT_EYE)
-            if not lb or not rb:
-                if self.prev_left_pupil and self.prev_right_pupil: left_pupil, right_pupil = self.prev_left_pupil, self.prev_right_pupil
+            if lb is None or rb is None:
+                if self.prev_left_pupil is not None and self.prev_right_pupil is not None:
+                    left_pupil, right_pupil = self.prev_left_pupil, self.prev_right_pupil
                 else: return None, None
             else:
                 left_pupil, self.fallback_iris_coords = get_anatomical_pupil_center(frame, landmarks, LEFT_IRIS, lb, self.fallback_iris_coords)
                 right_pupil, _ = get_anatomical_pupil_center(frame, landmarks, RIGHT_IRIS, rb, self.fallback_iris_coords)
-                if not left_pupil or not right_pupil:
-                    if self.prev_left_pupil and self.prev_right_pupil: left_pupil, right_pupil = self.prev_left_pupil, self.prev_right_pupil
+                if left_pupil is None or right_pupil is None:
+                    if self.prev_left_pupil is not None and self.prev_right_pupil is not None:
+                        left_pupil, right_pupil = self.prev_left_pupil, self.prev_right_pupil
                     else: return None, None
                 else: self.prev_left_pupil, self.prev_right_pupil = left_pupil, right_pupil
 
@@ -103,14 +107,14 @@ class NeuralVisionEngine:
         if len(self.gaze_history) >= 3:
             self.tracking_confidence = max(0, 1 - np.var(self.gaze_history, axis=0).sum() * 10)
         
-        show_tracking(frame, sc, lb if 'lb' in locals() else None, rb if 'rb' in locals() else None, fh, fv, self.tracking_confidence, self.dynamic_mode, pose_landmarks)
+        lb_val = lb if 'lb' in locals() else None
+        rb_val = rb if 'rb' in locals() else None
+        show_tracking(frame, sc, lb_val, rb_val, fh, fv, self.tracking_confidence, self.dynamic_mode, pose_landmarks)
         return sc, click_type
 
     def should_quit(self):
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'): return True
-        if key == ord('m'): self.dynamic_mode = not self.dynamic_mode
-        if key == ord('l'): self.show_landmarks = not self.show_landmarks
         return False
 
     def cleanup(self):

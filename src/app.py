@@ -22,7 +22,8 @@ def main():
         while True:
             gaze_coords, click_type = vision_engine.get_gaze()
             
-            if gaze_coords and vision_engine.calibrated:
+            # Correction ici : "is not None" pour éviter l'erreur NumPy
+            if gaze_coords is not None and vision_engine.calibrated:
                 mouse_engine.set_dynamic_mode(vision_engine.dynamic_mode)
                 mouse_engine.move_mouse(gaze_coords)
                 

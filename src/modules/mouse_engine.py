@@ -18,7 +18,9 @@ class KinematicMouse:
         self.dead_zone_x = self.dead_zone_y = 0.002 if enabled else 0.004
 
     def move_mouse(self, gaze_coords):
-        if not gaze_coords: return
+        # CORRECTION : is not None pour éviter l'erreur NumPy
+        if gaze_coords is None: return
+        
         now = time.time()
         if now - self.last_move_time < self.min_move_interval: return
         gx, gy = gaze_coords

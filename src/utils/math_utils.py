@@ -39,7 +39,7 @@ def extract_eye_region(frame, landmarks, eye_indices):
     return frame[y_min:y_max, x_min:x_max], (x_min, y_min, x_max - x_min, y_max - y_min)
 
 def get_anatomical_pupil_center(frame, landmarks, iris_indices, eye_bounds, fallback_iris_coords=None):
-    if not eye_bounds: return None, fallback_iris_coords
+    if eye_bounds is None: return None, fallback_iris_coords
     h, w = frame.shape[:2]
     eye_x, eye_y, eye_w, eye_h = eye_bounds
     
@@ -56,7 +56,7 @@ def get_anatomical_pupil_center(frame, landmarks, iris_indices, eye_bounds, fall
     
     eye_region = frame[eye_y:eye_y+eye_h, eye_x:eye_x+eye_w]
     if eye_region.size == 0:
-        return (iris_center_calc, iris_center_calc) if iris_center_calc else (None, None)
+        return (iris_center_calc, iris_center_calc) if iris_center_calc is not None else (None, None)
 
     eye_gray = cv2.cvtColor(eye_region, cv2.COLOR_BGR2GRAY)
     enhanced = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6,6)).apply(eye_gray)
@@ -71,15 +71,18 @@ def get_anatomical_pupil_center(frame, landmarks, iris_indices, eye_bounds, fall
         circle = np.uint16(np.around(circles))[0][0]
         pupil_center = (circle[0] / eye_w, circle[1] / eye_h)
     
-    if iris_center_calc:
-        if pupil_center:
+    if iris_center_calc is not None:
+        if pupil_center is not None:
             weight = 0.55
             final = (np.clip(weight * pupil_center[0] + (1 - weight) * iris_center_calc[0], 0, 1),
                      np.clip(weight * pupil_center[1] + (1 - weight) * iris_center_calc[1], 0, 1))
             return final, iris_center_calc
         return (np.clip(iris_center_calc[0], 0, 1), np.clip(iris_center_calc[1], 0, 1)), iris_center_calc
     
-    return (pupil_center, iris_center_calc) if pupil_center else (None, None)
+    if pupil_center is not None:
+        return (np.clip(pupil_center[0], 0, 1), np.clip(pupil_center[1], 0, 1)), iris_center_calc
+        
+    return None, iris_center_calc
 
 def get_eye_openness(landmarks, eye_indices):
     if len(eye_indices) < 6: return 0.5
@@ -107,7 +110,7 @@ def get_facial_axis_direction(landmarks):
     return h_shift, sum(v_components)
 
 def get_pose_direction(pose_landmarks):
-    if not pose_landmarks: return 0, 0
+    if pose_landmarks is None: return 0, 0
     try:
         nose = pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
         ls, rs = pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER], pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
@@ -115,7 +118,7 @@ def get_pose_direction(pose_landmarks):
         sh_w = abs(rs.x - ls.x)
         if sh_w > 0:
             h_off = ((nose.x - (ls.x+rs.x)/2)/sh_w * 2.2) + ((nose.x - (le.x+re.x)/2)/sh_w * 2.8)
-            v_tilt = (nose.y - (le.y+re.y)/2) / abs((le.y+re.y)/2 - (ls.y+rs.y)/2) * 6.5
+            v_tilt = (nose.y - (le.y+re.y)/2) / abs((le.y+re.y)/2 - (ls.y+rs.y)/2 + 1e-6) * 6.5
             return h_off, v_tilt
     except: pass
     return 0, 0

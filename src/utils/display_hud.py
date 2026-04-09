@@ -31,7 +31,7 @@ def draw_enhanced_landmarks(frame, landmarks, facial_axis_points, left_iris, rig
     for _, idx in facial_axis_points.items():
         cv2.circle(frame, (int(landmarks.landmark[idx].x * w), int(landmarks.landmark[idx].y * h)), 3, (255, 255, 0), -1)
     
-    if pose_landmarks and mp_pose:
+    if pose_landmarks is not None and mp_pose is not None:
         points = [mp_pose.PoseLandmark.NOSE, mp_pose.PoseLandmark.LEFT_EAR, mp_pose.PoseLandmark.RIGHT_EAR, 
                   mp_pose.PoseLandmark.LEFT_SHOULDER, mp_pose.PoseLandmark.RIGHT_SHOULDER]
         for p_idx in points:
@@ -52,14 +52,16 @@ def show_calibration_screen(frame, calibration_samples, calibration_threshold, d
 def show_tracking(frame, coords, left_bounds, right_bounds, face_h, face_v, tracking_confidence, dynamic_mode, pose_landmarks=None):
     display_frame = cv2.flip(frame, 1)
     h, w = display_frame.shape[:2]
-    if left_bounds and right_bounds:
+    if left_bounds is not None and right_bounds is not None:
         lx, ly, lw, lh = left_bounds
         rx, ry, rw, rh = right_bounds
         cv2.rectangle(display_frame, (w - lx - lw, ly), (w - lx, ly + lh), (0, 255, 0), 2)
         cv2.rectangle(display_frame, (w - rx - rw, ry), (w - rx, ry + rh), (0, 255, 0), 2)
-    if coords:
+    
+    if coords is not None:
         gx, gy = int((1 - coords[0]) * w), int(coords[1] * h)
         cv2.circle(display_frame, (gx, gy), 8 if dynamic_mode else 10, (0, 255, 0) if dynamic_mode else (0, 165, 255), -1)
+    
     mode_text = "MODE: FAST MOUSE" if dynamic_mode else "MODE: SLOW MOUSE"
     cv2.putText(display_frame, mode_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0) if dynamic_mode else (0, 165, 255), 2)
     cv2.putText(display_frame, f"Signal Quality: {tracking_confidence:.2f}", (10, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
