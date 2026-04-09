@@ -26,7 +26,7 @@ The engine is structured into specialized modules to adhere to the Single Respon
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/NeuralGaze-Engine.git
+   git clone https://github.com/Dourayed-Smari/NeuralGaze-Engine.git
    cd NeuralGaze-Engine
    ```
 
